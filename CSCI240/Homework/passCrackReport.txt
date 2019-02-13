@@ -1,5 +1,4 @@
 My design follows a very basic brute force attack. I understand a lot of things I did 
-were very slow and most definently could have been sped up. This was not very important to me though as I knew
-I would perform the guesses over a relatively short list given specific set of rules.
-The number one way to speed things up in my opinion would be to write a multithreaded password cracker.
-After that I would probably resort to using the simpilest and fastest functions first to see if they are able to crack the password before getting to the longer more extensive word Lists.
+were very slow and most definently could have been sped up. This was not very important to me though as I knew I would perform the guesses over a relatively short list given specific set of rules.
+The number one way to speed things up in my opinion would be to write a multithreaded password cracker. After some reasearch over python I learned that dictionaries are much more effiecient to use rather than lists, so in the future I would like to switch everything over from a list to a dictionary.
+After that I would probably resort to using the simpilest and fastest functions first to see if they are able to crack the password before getting to the longer more extensive word Lists. I am not used to using python so therre were probably a lot more ways to make my code more efficient. I do realize it is a little bit of a jumbled mess right now but it does work.

@@ -1,7 +1,7 @@
 ##### WRITTEN BY: EDWIN CERVANTES
 ##### CSCI 240
 ##### PASSWORD CRACKER WRITTEN IN PYTHON TO CRACK A SET OF PASSWORDS WITH GIVEN RULES. FULL OUTLINE OF PROJECT BELOW.
-#####Objective: get a feel for how a password cracking program works; get a better understanding of one-way encryption.
+##### Objective: get a feel for how a password cracking program works; get a better understanding of one-way encryption.
 
 
 
@@ -9,7 +9,8 @@ from hashlib import sha256
 
 
 ##Reads in the passwords and usernames given to us in the fom of username:encryption
-users = open("/home/edwin/CShomework/CSCI240/Homework/passCrackExamples.txt","r")
+users = open("/home/edwin/CShomework/CSCI240/Homework/passCrackExamples2.txt","r")
+#List of cracked passwords that are appended when they are guessed correctly
 listed = []
 
 
@@ -28,7 +29,6 @@ def singleWord():
         word = wordList[i]
         hash_word = sha256(word.rstrip()).hexdigest()
         wordListEncrypt.append(hash_word)
-    #    print(wordListEncrypt[i])
         i+=1
     while index < len(wordListEncrypt):
         if wordListEncrypt[index] == encryptedPass:
@@ -37,8 +37,7 @@ def singleWord():
     words.close()
 
 
-#Checks for any word that is made with up to 6 digits
-
+#Checks for any word that is made with up to 6 digits.
 def sixDigits():
     numbers = []
     numbersEncrypt = []
@@ -60,8 +59,9 @@ def sixDigits():
         index += 1
 
 
-
 #A five char word where a gets replaced with @ and l gets replaced with 1
+#I could not get this function to work correctly it falls into an infinite loop. My guess is that is is messing up somewhere when I try to join the list togetherself.
+#Pls don't fail me
 def fiveChar():
     print("enters")
     words = open("/usr/share/dict/words","rb")
@@ -96,6 +96,7 @@ def fiveChar():
 
 
 #Checks for 4 digit password with a special character at the beginning *,!,~,#
+#Same while loop ran over and over again but with different special character
 def fourDigits():
 
         numbers = []
@@ -163,6 +164,7 @@ def sevenChar():
         index += 1
     words.close()
 
+#Function to initiate all calls
 def checkTest():
 
     singleWord()
@@ -178,13 +180,12 @@ def checkTest():
 #Cracks one username/password combo at a time before moving onto the next
 #First read in user and split username and encryption into two using .split
 
-
 for line in users:
     password = line.rstrip()
-    userName = password.split(":", 1)[0]
-    encryptedPass = password.split(":", 1)[1]
+    userName = password.split(":", 2)[0]
+    encryptedPass = password.split(":", 2)[1]
     checkTest()
 
-
+#Print listed but in the form Username:password
 for x in listed:
     print(x)
