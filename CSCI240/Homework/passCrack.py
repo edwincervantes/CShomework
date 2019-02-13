@@ -9,7 +9,7 @@ from hashlib import sha256
 
 
 ##Reads in the passwords and usernames given to us in the fom of username:encryption
-users = open("/home/edwin/CSCI240/Homework/passCrackExamples.txt","r")
+users = open("/home/edwin/CShomework/CSCI240/Homework/passCrackExamples.txt","r")
 listed = []
 
 
@@ -32,7 +32,7 @@ def singleWord():
         i+=1
     while index < len(wordListEncrypt):
         if wordListEncrypt[index] == encryptedPass:
-            listed.append(wordList[index])
+            listed.append(userName + ":" + wordList[index])
         index+=1
     words.close()
 
@@ -56,7 +56,7 @@ def sixDigits():
         j += 1
     while index < len(numbersEncrypt):
         if numbersEncrypt[index] == encryptedPass:
-            listed.append(numbers[index])
+            listed.append(userName + ":" + numbers[index])
         index += 1
 
 
@@ -89,7 +89,7 @@ def fiveChar():
         i+=1
     while j < len(fiveCharEncrypted):
         if fiveCharEncrypted[j] == encryptedPass:
-            listed.append(fiveChar[index])
+            listed.append(userName + ":" + fiveChar[index])
         j += 1
     words.close()
 
@@ -130,7 +130,7 @@ def fourDigits():
             j += 1
         while index < len(numbersEncrypt):
             if numbersEncrypt[index] == encryptedPass:
-                listed.append(numbers[index])
+                listed.append(userName + ":" + numbers[index])
             index += 1
 
 
@@ -159,7 +159,7 @@ def sevenChar():
         j+=1
     while index < len(sevenCharEncrypted):
         if sevenCharEncrypted[index] == encryptedPass:
-            listed.append(sevenChar[index])
+            listed.append(userName + ":" + sevenChar[index])
         index += 1
     words.close()
 
@@ -177,6 +177,7 @@ def checkTest():
 
 #Cracks one username/password combo at a time before moving onto the next
 #First read in user and split username and encryption into two using .split
+
 
 for line in users:
     password = line.rstrip()
