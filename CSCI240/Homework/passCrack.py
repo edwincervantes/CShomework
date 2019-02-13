@@ -9,6 +9,10 @@ from hashlib import sha256
 
 
 ##Reads in the passwords and usernames given to us in the fom of username:encryption
+############################################################################################################################################################################################################################
+#Note: In test file given not all users and hashed passwords on the same line. They must all be on one line or you will get an out of bounds error. Username:Hash:OtherStuff all on one line
+#Note: Make sure to change users and words to correct system directory and pointing towards what they need to point to. users needs to be read and words in read bytes
+############################################################################################################################################################################################################################
 users = open("/home/edwin/CShomework/CSCI240/Homework/passCrackExamples2.txt","r")
 #List of cracked passwords that are appended when they are guessed correctly
 listed = []
