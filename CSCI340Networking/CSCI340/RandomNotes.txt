@@ -1,0 +1,5 @@
+Tools:
+-Wireshark is stored directly on PC apps
+-Packet Tracer is located in dir /opt/pt/bin.... use ./PacketTracer7 to run
+-Packet Tracer saves to /home/edwin/pt
+-Ask if I can use Ubuntu instead of using a VM for Kali
