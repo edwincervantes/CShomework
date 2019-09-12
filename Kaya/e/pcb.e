@@ -1,6 +1,6 @@
 #ifndef PCB
 #define PCB
-
+#include "../h/types.h"
 /************************* PROCQ.E *****************************
 *
 *  The externals declaration file for the Process Control Block
@@ -9,7 +9,7 @@
 *  Written by Mikeyg
 */
 
-#include "../h/types.h"
+
 
 extern void freePcb (pcb_PTR p);
 extern pcb_PTR allocPcb ();

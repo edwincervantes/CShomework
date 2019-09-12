@@ -7,12 +7,44 @@
  *
  ****************************************************************************/
 
-//Defines the structure of a Proccess Control Block,(pcb_t)
-typedef struct pcb_t{
-	pcb_t*p_next, prev, *p_prnt, *p_child, *p_sib;     //pointer to next pcb, parent, child, and sibling
-	state_t p_s; // State of the processor
-	int *p_semAdd //Pointer to sema4 on which process is blocked
-}pcb_t, *pcb_PTR;
+
+#define STATEREGNUM	31
+	typedef struct state_t {
+	unsigned int	s_asid;
+	unsigned int	s_cause;
+	unsigned int	s_status;
+	unsigned int 	s_pc;
+	int	 			s_reg[STATEREGNUM];
+
+} state_t, *state_PTR;
+
+typedef struct pcb_t {
+/* Defines the structure of a Proccess Control Block,(pcb_t) */
+ /* process queue fields */
+ struct pcb_t *p_next,		/* ptr to old proc state */
+				*p_prev,	/* ptr to new proc state */
+
+ /* process tree fields */
+				*p_prnt,/* ptr to parent */
+				*p_child,	/* ptr to first child */
+				*p_next_sib,		/* ptr to next sibling */
+				*p_prev_sib; /* ptr to prev. sibling */
+
+				/* process status information */
+			 state_t p_state; 			/* state of the processor */
+			 int* p_semAdd; 		/* ptr to semaphore addr */
+} pcb_t, *pcb_PTR;
+
+
+/* semaphore descriptor type */
+typedef struct semd_t {
+	struct semd_t	*s_next,	/* next semaphore addr */
+					*s_prev;	/* prev. semaphore addr */
+				
+	int				*s_semAdd;	/* ptr to the semaphore addr */
+	pcb_t			*s_procQ;	/* tail ptr to a process queue */
+}semd_t, *semd_PTR;
+
 
 
 typedef signed int cpu_t;
@@ -32,7 +64,6 @@ typedef struct {
 #define t_recv_command		d_command
 #define t_transm_status		d_data0
 #define t_transm_command	d_data1
-#define pcb_t* pcb_PTR
 
 #define DEVINTNUM 5
 #define DEVPERINT 8
@@ -52,15 +83,6 @@ typedef struct {
 	device_t   devreg[DEVINTNUM * DEVPERINT];
 } devregarea_t;
 
-#define STATEREGNUM	31
-typedef struct state_t {
-	unsigned int	s_asid;
-	unsigned int	s_cause;
-	unsigned int	s_status;
-	unsigned int 	s_pc;
-	int	 			s_reg[STATEREGNUM];
-
-} state_t, *state_PTR;
 
 #define	s_at	s_reg[0]
 #define	s_v0	s_reg[1]

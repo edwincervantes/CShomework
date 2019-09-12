@@ -17,6 +17,8 @@
 
 /* Sets number of processes avaliable at start */
 #define MAXPROC 20
+#define MAXINT  0xFFFFFFFF
+
 
 /* timer, timescale, TOD-LO and other bus regs */
 #define RAMBASEADDR	0x10000000
@@ -32,6 +34,9 @@
 #define OFF             0
 #define HIDDEN		static
 #define EOS		'\0'
+
+
+
 
 #define NULL ((void *)0xFFFFFFFF)
 
