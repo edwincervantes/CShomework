@@ -14,37 +14,49 @@
 from socket import *
 import sys # In order to terminate the program
 
-serverSocket = socket(AF_INET, SOCK_STREAM)
+#create 2 vars host and port and assign a port number. Use something over 1024
+HOST, PORT = '', 8888
+
 #Prepare a sever socket
-#Fill in start
-#Fill in end
+#create a variable named listen_socket and use the socket lib we just called above to
+#(AF_INET is used for IPv4 protocols) and (SOCK_STREAM is used for TCP)
+serverSocket = socket(AF_INET, SOCK_STREAM)
+
+#bind the socket to server address and server port
+serverSocket.bind((HOST,PORT))
+
+#listen for one connection
+serverSocket.listen(1)
+
+
 while True:
 #Establish the connection
-print('Ready to serve...')
-connectionSocket, addr =
-#Fill in start
-#Fill in end
+    print ("Ready to serve...")
+#Creates socket
+    #listen for the requests that are coming in from client connection and addrt
+    connectionSocket, addr = serverSocket.accept()
+    print ("is it here?")
+
 try:
-message =
-#Fill in start
-#Fill in end
-filename = message.split()[1]
-f = open(filename[1:])
-outputdata = #Fill in start
-#Fill in end
-#Send one HTTP header line into socket
-#Fill in start
-#Fill in end
+     print ("Reaches try")
+     message = connectionSocket.recv(1024).encode('utf-8')
+     filename = message.split()[1]   
+     filename = '/HelloWorld.html'
+     f = open(filename[1:], "rb")
+     outputdata = f.read()
+#Send one HTTP header line into socket   
+
+
 #Send the content of the requested file to the client
-for i in range(0, len(outputdata)):
-connectionSocket.send(outputdata[i].encode())
-connectionSocket.send("\r\n".encode())
-connectionSocket.close()
+     for i in range(0, len(outputdata)):
+         connectionSocket.send('\nHTTP/1.x 200 OK\n') #sends a 200 OK header line
+         connectionSocket.send(outputdata[i].encode())
+         connectionSocket.send("\r\n".encode())
+#Closes socket
+     connectionSocket.close()
 except IOError:
-#Send response message for file not found
-#Fill in start#Fill in end
-#Close client socket
-#Fill in start
-#Fill in end
-serverSocket.close()
-sys.exit()#Terminate the program after sending the corresponding data
+     connectionSocket.send('\nHTTP/1.x 404 Not Found\n')
+
+
+     serverSocket.close()
+     sys.exit()#Terminate the program after sending the corresponding data
