@@ -20,7 +20,7 @@ HOST, PORT = '', 8888
 #Prepare a sever socket
 #create a variable named listen_socket and use the socket lib we just called above to
 #(AF_INET is used for IPv4 protocols) and (SOCK_STREAM is used for TCP)
-serverSocket = socket(AF_INET, SOCK_STREAM)
+serverSocket = socket(AF_INET,SOCK_STREAM)
 
 #bind the socket to server address and server port
 serverSocket.bind((HOST,PORT))
@@ -35,28 +35,27 @@ while True:
 #Creates socket
     #listen for the requests that are coming in from client connection and addrt
     connectionSocket, addr = serverSocket.accept()
-    print ("is it here?")
 
-try:
-     print ("Reaches try")
-     message = connectionSocket.recv(1024).encode('utf-8')
-     filename = message.split()[1]   
-     filename = '/HelloWorld.html'
-     f = open(filename[1:], "rb")
-     outputdata = f.read()
-#Send one HTTP header line into socket   
-
-
-#Send the content of the requested file to the client
-     for i in range(0, len(outputdata)):
-         connectionSocket.send('\nHTTP/1.x 200 OK\n') #sends a 200 OK header line
-         connectionSocket.send(outputdata[i].encode())
-         connectionSocket.send("\r\n".encode())
-#Closes socket
-     connectionSocket.close()
-except IOError:
-     connectionSocket.send('\nHTTP/1.x 404 Not Found\n')
+    try:
+        message = connectionSocket.recv(1024).decode('utf-8')
+        filename = message.split()[1]   
+        #filename = '/HelloWorld.html'
+        f = open(filename[1:])
+        outputdata = f.read()
+    #Send one HTTP header line into socket   
+        connectionSocket.send('\nHTTP/1.x 200 OK\n') #sends a 200 OK header line
 
 
-     serverSocket.close()
-     sys.exit()#Terminate the program after sending the corresponding data
+
+    #Send the content of the requested file to the client
+        for i in range(0, len(outputdata)):
+            connectionSocket.send(outputdata[i].encode())
+        connectionSocket.send("\r\n".encode())
+    #Closes socket
+        connectionSocket.close()
+    except IOError:
+        connectionSocket.send('\nHTTP/1.x 404 Not Found\n')
+
+
+    serverSocket.close()
+    sys.exit()#Terminate the program after sending the corresponding data
