@@ -53,9 +53,9 @@ while True:
         connectionSocket.send("\r\n".encode())
     #Closes socket
         connectionSocket.close()
-    except IOError:
-        connectionSocket.send('\nHTTP/1.x 404 Not Found\n')
-
+    except IOError as e: 
+        connectionSocket.send("HTTP/1.x 404 Not Found\r\n\r\n")
+        connectionSocket.send("<html><head></head><body><h1>404 Not Found</h1></body></html>\r\n")
 
     serverSocket.close()
     sys.exit()#Terminate the program after sending the corresponding data
