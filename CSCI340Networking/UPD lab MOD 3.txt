@@ -1,0 +1,12 @@
+﻿EJ Cervantes
+Deep
+CSCI 340
+23 September 2019
+UDP
+1. The four fields are Source Port, Destination Port, Length, and Checksum.
+2. They are all 2 bytes long.
+3.
+4. 2^16
+5. Port: 65536
+6. UDP protocol 17 
+7. There are no replies
