@@ -1,0 +1,8 @@
+- Visit https://golang.org/doc/install to install the correct version of GO for your OS and architecture.
+
+- Scripts are labeled as ________.go scripts
+
+- Use "go build" to build an executable script for your .go script
+
+- Execute using "./______" where _______ is the name of the script (without .go)
+

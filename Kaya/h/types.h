@@ -1,15 +1,18 @@
 #ifndef TYPES
 #define TYPES
+#include "../h/const.h"
 
 /****************************************************************************
  *
  * This header file contains utility types definitions.
  *
  ****************************************************************************/
+typedef unsigned int memaddr;
+
+typedef signed int cpu_t;
 
 
-#define STATEREGNUM	31
-	typedef struct state_t {
+typedef struct state_t {
 	unsigned int	s_asid;
 	unsigned int	s_cause;
 	unsigned int	s_status;
@@ -30,9 +33,16 @@ typedef struct pcb_t {
 				*p_next_sib,		/* ptr to next sibling */
 				*p_prev_sib; /* ptr to prev. sibling */
 
-				/* process status information */
+				/* process status information. We set these to NULL so we can check if an operation was performed in passUpOrDie()*/
 			 state_t p_state; 			/* state of the processor */
 			 int* p_semAdd; 		/* ptr to semaphore addr */
+			 state_PTR oldSys;		/* old sys */
+			 state_PTR newSys;		/* new sys */
+			 state_PTR oldPgm;		/*Old program trap*/
+			 state_PTR newPgm;		/*New program trap*/
+			 state_PTR oldTLB;		/*Old tlb*/
+			 state_PTR newTLB;		/*New tlb*/
+			 cpu_t p_time;			/* start time of day */
 } pcb_t, *pcb_PTR;
 
 
@@ -47,18 +57,13 @@ typedef struct semd_t {
 
 
 
-typedef signed int cpu_t;
-
-
-typedef unsigned int memaddr;
-
 
 typedef struct {
 	unsigned int d_status;
 	unsigned int d_command;
 	unsigned int d_data0;
 	unsigned int d_data1;
-} device_t;
+} device_t, *device_PTR;
 
 #define t_recv_status		d_status
 #define t_recv_command		d_command
@@ -67,6 +72,8 @@ typedef struct {
 
 #define DEVINTNUM 5
 #define DEVPERINT 8
+
+/* device register area */
 typedef struct {
 	unsigned int rambase;
 	unsigned int ramsize;
@@ -81,7 +88,7 @@ typedef struct {
 	unsigned int inst_dev[DEVINTNUM];
 	unsigned int interrupt_dev[DEVINTNUM];
 	device_t   devreg[DEVINTNUM * DEVPERINT];
-} devregarea_t;
+} devregarea_t, *devregarea_PTR;
 
 
 #define	s_at	s_reg[0]
