@@ -191,12 +191,9 @@ int insertBlocked (int *semAdd, pcb_PTR p){
 
         /* insert newly added pcb_t process queue
         into the process queue */
-        insertProcQ(&(allSemd->s_procQ), p);
-
-        /* the new semd_t has a new address */
-        allSemd->s_semAdd = semAdd;
         p->p_semAdd = semAdd;
-        
+        insertProcQ(&(allSemd->s_procQ), p);
+       
         /* new semd_t is allocated at this point */
         return FALSE;
 } /* End of insertBlocked */

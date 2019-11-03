@@ -1,6 +1,6 @@
 /********************************************************************************************************************************
 
-                              ~inturrupts.c~
+                              ~interrupts.c~
               Written By Solomon G and Edwin Cervantes
 
 This module implements the device interrupt exception
@@ -54,6 +54,7 @@ Return control to the process that was executing at the time of the Interrupt
 #include "/usr/local/include/umps2/umps/libumps.e"
 
 
+
 /*Local functions we'll need later on*/
 HIDDEN int getDevNumber(unsigned int* bitmap);
 HIDDEN void copyState(state_PTR src, state_PTR dest);
@@ -64,6 +65,7 @@ HIDDEN void exitHandler(cpu_t startTime);
 
 
 void interruptHandler(){
+    
     cpu_t startTime, endTime; /*Used to find out how much time we spend in our IHandler*/
     unsigned int causeReg, deviceNumber, lineNumber; /*Cause register, line, and device*/
     device_PTR deviceReg; /*device register*/
@@ -86,22 +88,26 @@ void interruptHandler(){
 
     lineNumber = 0;
 
+    
     /*Checking to see where the interrupt occured*/
 
     /*This should never happen in Kaya OS. Invoke PANIC()*/
     if((causeReg & FIRST) != 0){/*Multi-Core*/
         PANIC();
     }
+
     else if ((causeReg & SECOND) != 0){/*Clock. Time over, invoke scheduler*/
         exitHandler(startTime);
     }
     else if ((causeReg & THIRD) != 0){/*Clock*/
-        LDIT(THOUSANDMS); /*Loading 1000ms*/
-        sema4 = (int*) &(sema4[SEMALLOC- 1]); /*Lets get to unblocking the sema4*/
+        debug(700);
+        LDIT(INTERVALTIME); /*Loading 100ms*/
+        sema4 = (int*) &(sema4[PSEUDOCLOCK]); /*Lets get to unblocking the sema4*/
         while(headBlocked(sema4) != NULL){
             p = removeBlocked(sema4);
             STCK(endTime);
             if(p != NULL){
+                debug (393);
                 insertProcQ(&readyQueue, p); /*Inserting*/
                 (p->p_time) = (p->p_time) + (endTime - startTime); /*Time stuff*/
                 softBlockCount = softBlockCount - 1;
@@ -125,7 +131,6 @@ void interruptHandler(){
     else if ((causeReg & EIGHTH) != 0){/*Terminal*/
         lineNumber = TERMINT;
     }
-   
     /*Fetch device number. Subtract 3 since first 3 devices do not count*/
     deviceNumber = getDevNumber((unsigned int*)(INTBIT + ((lineNumber - THREE) * LENGTHWORD)));
 
@@ -133,7 +138,6 @@ void interruptHandler(){
     if (deviceNumber == INTNOTNEEDED){
         PANIC();
     }
-
     /*Lets go get the register*/
     deviceReg = (device_PTR) (INTDEV +((lineNumber - THREE) * DEVREGSIZE * EIGHT) + (deviceNumber * DEVREGSIZE));
 
@@ -145,18 +149,7 @@ void interruptHandler(){
 
     }else{ /*i.e.: We have a terminal interrupt. Write on 3, 4, and 5, read otherwise*/
         int transm = (deviceReg -> t_transm_status & PRIVATEINSTUC);
-
-        if(transm == 3){
-            i = (EIGHT *(lineNumber - THREE) + deviceNumber); /*Get index*/
-            statusOfReg = deviceReg -> t_transm_status; /*store away status*/
-            deviceReg -> t_transm_command = ACK; /*ACK it*/
-        }
-        if(transm == 4){
-            i = (EIGHT *(lineNumber - THREE) + deviceNumber); /*Get index*/
-            statusOfReg = deviceReg -> t_transm_status; /*store away status*/
-            deviceReg -> t_transm_command = ACK; /*ACK it*/
-        }
-        if(transm == 5){
+        if(transm == 3 || 4 || 5){
             i = (EIGHT *(lineNumber - THREE) + deviceNumber); /*Get index*/
             statusOfReg = deviceReg -> t_transm_status; /*store away status*/
             deviceReg -> t_transm_command = ACK; /*ACK it*/
@@ -170,13 +163,17 @@ void interruptHandler(){
     sema4 =&(semdTable[i]);
     (*sema4) = (*sema4) +1;
 
-    if(p != NULL){
-        p -> p_state.s_v0 = statusOfReg;
-        insertProcQ(&readyQueue, p);
-        softBlockCount = softBlockCount - 1;
+    /*wake up*/
+    if((*sema4) <= 0){
+        p = removeBlocked(sema4);
+    
+        if(p != NULL){
+            p -> p_state.s_v0 = statusOfReg; 
+            insertProcQ(&readyQueue, p);
+            softBlockCount = softBlockCount - 1;
+        }
     }
     exitHandler(startTime);
-     
     }
 
 

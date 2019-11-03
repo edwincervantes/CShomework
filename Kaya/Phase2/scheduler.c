@@ -22,6 +22,7 @@ ReadyQueue == NULL (empty)
 #include "../h/const.h"
 #include "../h/types.h"
 #include "../e/initial.e"
+#include "../e/exceptions.e"
 #include "../e/pcb.e"
 #include "../e/asl.e"
 #include "/usr/local/include/umps2/umps/libumps.e"
@@ -36,55 +37,37 @@ GLOBAL VARIABLES */
 cpu_t TODStart;
 cpu_t currentTOD;
 
+
+
 void scheduler(){
-
-    /* Check to see if there are any ready jobs */
-    if (emptyProcQ(readyQueue) == NULL){
-
-        currentProcess = NULL;
-        if (processCount == 0){
-
-        /* This is to check if there are no jobs left, then halt */
-            HALT();
-        }
-
-        /* If there are one or more jobs, i.e. is there an IO? */
-        if (processCount > 0){
-            if (softBlockCount == 0){
-
-                /* kernel panic */
-                PANIC();
-            } else if (softBlockCount > 0){
-                    /* enable interrupts for the next job */
-                    setSTATUS(getSTATUS() | ALLOFF | INTERRUPTSON | IC | IM);
-                    WAIT(); /* wait */
-                }
-        }
-    } else {
-
-        /* Lets see if there is a current processes. If so store off time
-        We will save the amt of time currentProcess had on the CPU and commit to cpuTime*/
-        if (currentProcess != NULL)
+   /* Lets see if there is a current processes. If so store off time
+    We will save the amt of time currentProcess had on the CPU and commit to cpuTime*/
+    if (currentProcess != NULL)
         {
             STCK(currentTOD);
             currentProcess->p_time = (currentProcess->p_time) + (currentTOD - TODStart);
         }
+    /* Check to see if there are any ready jobs */
+    if (!emptyProcQ(readyQueue)){
+        currentProcess = removeProcQ(&readyQueue);/*Who is the next process in our q*/
 
-        /* generate an interrupt when timer is up */
-        if(currentTOD < QUANTUM) {
-            /* our current job will be less than 
-            our quantum, take the shorter */
-            setTIMER(currentTOD);
-        } else {
-            /* set the quantum */
-            setTIMER(QUANTUM);
+        STCK(TODStart); /*start ckick*/
+
+        setTIMER(QUANTUM); /*Start our quantum of 5000 ms*/
+        contextSwitch(&(currentProcess -> p_state)); /*BAM context switch*/
+    
+    } else { /*No jobs in readyq. Enter either halt, panic or wait*/
+        currentProcess = NULL;
+        if(processCount == 0){ /*This is what we want*/
+            HALT();
         }
+        if(processCount > 0 && softBlockCount == 0) { /*We enter deadlock, screwed*/
+            PANIC();
+		}
+        if(processCount > 0 && softBlockCount > 0) {
+			setSTATUS((getSTATUS() | ALLOFF | INTERRUPTSON | INTERRUPTSCON | IM));
+			WAIT(); /* chill out and wait state */
+		}
 
-        /* If it's not null, remove the ready of readyQ */
-        currentProcess = removeProcQ(&readyQueue);
-
-        /* start the time */
-        STCK(TODStart);
-        contextSwitch(&(currentProcess -> p_state));
     }
 }

@@ -66,13 +66,15 @@ int semdTable[SEMALLOC];
 
 extern void test();
 
-
+int debug (int val){
+    return val;
+}
 
 int main() {
     int i;
     unsigned int RAMTOP;
         
-    /* defining the rdev egister area*/
+    /* defining the rdev register area*/
     devregarea_PTR registerBus;
 
     state_PTR newState;
@@ -136,7 +138,7 @@ int main() {
 
     /*If currproc =! NULL*/
     currentProcess->p_state.s_sp = (RAMTOP - FRAMESIZE);
-    currentProcess->p_state.s_pc = (memaddr) test; 
+    currentProcess->p_state.s_pc = (memaddr) test;
     currentProcess->p_state.s_t9 = (memaddr) test;
     currentProcess->p_state.s_status = (ALLOFF | INTERRUPTSON | IM | TE);
 
@@ -149,7 +151,7 @@ int main() {
 
 
     /* load an interval time*/
-    LDIT(INTERVALTMR);
+    LDIT(INTERVALTIME);
 
     /* Call the scheduler */
     scheduler();

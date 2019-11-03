@@ -32,8 +32,13 @@ HIDDEN void waitForClock(state_PTR state);
 HIDDEN void waitForIODevice(state_PTR state);
 HIDDEN void passUpOrDie(state_PTR state, int trap);
 HIDDEN void copyState(state_PTR src, state_PTR dest);
-HIDDEN void helperTerminateProgeny(pcb_PTR p);
+HIDDEN void helperTerminateOffspring(pcb_PTR p);
 
+
+void contextSwitch(state_PTR state){
+    /* load the new state */
+    LDST(state);
+}
 
 /*PROGTRAP defined as 1*/
 void progTrapHandler(){
@@ -42,12 +47,6 @@ void progTrapHandler(){
     passUpOrDie(oldS, PROGTRAP);
     /* Pass up the process to its appropriate
     handler or terminate it */
-}
-
-
-void contextSwitch(state_PTR state){
-    /* load the new processor state */
-    LDST(state);
 }
 
 /*TLBTRAP defined as 0*/
@@ -114,6 +113,8 @@ void syscallHandler(){
 				passUpOrDie(called, SYSTRAP); /*SYSTRAP defined as 2*/
 			break;
 	}
+
+    PANIC();
 }
 
 
@@ -129,53 +130,57 @@ HIDDEN void createNewProcess (state_PTR state){
     if (p != NULL){
         /* there is now n+1 running processes */
         processCount++;
-        /* since there is a free process, and if the process 
-        has a parent, it is inserted into the parent, and then
-        placed in the ready queue */
+        /* if the process  has a parent, it is inserted and then placed in the ready queue */
         insertChild(currentProcess, p);
         insertProcQ(&(readyQueue), p);
         /* copy the content from the state's 
         $a1 register to the new pcb_t's state */
         temp = (state_PTR) state->s_a1;
         copyState(temp, &(p->p_state));
-        /* acknowledge the success of the new process
-        by placing 0 in the state's $v0 register */ 
+        /* the success of the new process */ 
         state->s_v0 = SUCCEEDED;
+
+        contextSwitch(state);
     } else {
-        /* if there are no free processes, acknowledge 
-        the failure of a new allocated pcb_t by placing 
-        -1 in the state's $v0 register */
+        /* if there are no free processes, failure of a new allocated pcb_t */
         state->s_v0 = FAILED;
+        contextSwitch(state);
     }
     /* context switch */
     contextSwitch(state);
     }
 
-/* Syscall 2 will go here */
+/* Syscall 2 */
 HIDDEN void terminateProcess() {
     /* check if there are no children. If so, process is decremented.
-    we remove current process, and free up a pcb_t */
+    remove current process, and free up a pcb_t */
     if(emptyChild(currentProcess)){
         processCount--;
         outChild(currentProcess);
         freePcb(currentProcess);
     } else {
-        helperTerminateProgeny(currentProcess);
+        helperTerminateOffspring(currentProcess);
     }
+
+    /* don't no process, thus, call the scheduler */
+    currentProcess = NULL;
+
+    /* schedule a new process */
+    scheduler();
 }
 
 /* Syscall 3 */
 HIDDEN void verhogen(state_PTR state) {
     /* the semaphore is placed in the a1 register of the 
     passed in state_t */
-    pcb_PTR p =NULL;
+    pcb_PTR p;
     int* semaphore = (int*) state->s_a1;
     /* increment the semaphore - the V operation on 
     the semaphore */
     ((*semaphore))++;
-    /* if the synchronization semaphore is less than or equal to 0, 
-    then it will remove the process from the blocked processes 
-    and place it in the ready queue - which synchronizes the processes */
+    /* if semaphore is less than or equal to 0, 
+    remove the process from the blocked processes 
+    and place it in ready queue*/
     if((*semaphore) <= 0) {
         /* unblock the next process */
         p = removeBlocked(semaphore);
@@ -184,10 +189,7 @@ HIDDEN void verhogen(state_PTR state) {
         if(p != NULL) {
             /* place it in the ready queue */
             insertProcQ(&readyQueue, p);
-            softBlockCount--;
-        }else
-        {
-            /* idk */
+            /* softBlockCount--; */
         }
         
     }
@@ -199,19 +201,25 @@ HIDDEN void verhogen(state_PTR state) {
 HIDDEN void passeren(state_PTR state) {
     /* get the semaphore in the s_a1 */
     int* semaphore = (int*) state->s_a1;
+
+    cpu_t temp, eTime;
     /* decrement the semaphore */
     (*semaphore)--;
     if ((*semaphore) < 0) {
+
+        STCK(temp);
+        /* calculate elapsed time */
+        eTime = (temp - TODStart);
+        (currentProcess->p_time) = (currentProcess->p_time) + eTime;
         /* copy from the old syscall area to the new process's state */
         copyState(state, &(currentProcess->p_state));
         /* the process now must wait */
         insertBlocked(semaphore, currentProcess);
-        softBlockCount++;
         /* get a new job */
         scheduler();
     }
-    /* if the semaphore is greater than or equal to zero, do not 
-    block the process, just load the new state by context switching*/
+    /* if semaphore is greater than or equal to 0, do not 
+    block the process, context switch happens */
     contextSwitch(state);
 }
 
@@ -259,41 +267,44 @@ HIDDEN void syscall5(state_PTR state) {
 
 /* Syscall 6 */
 HIDDEN void calculateCpuTime(state_PTR state) {
-        /* the clock can be started by placing a new value in the 
-        STCK ROM function */
-        cpu_t TODEnd, eTime;
-        /* copy the state from the old syscall into the pcb_t's state */
-        copyState(state, &(currentProcess->p_state)); 
+        /* copy the state from old sys into the pcb_t's state */
+        copyState(state, &(currentProcess->p_state));
+        cpu_t temp, eTime;
+
         /* start the clock  for the stop */ 
-        STCK(TODEnd);
-        /* calculate the elapsed time */
-        eTime = TODEnd - TODStart;
-        currentProcess->p_time = (currentProcess->p_time) + eTime;
+        STCK(temp);
+
+        /* calculate elapsed time */
+        eTime = (temp - TODStart);
+        (currentProcess->p_time) = (currentProcess->p_time) + eTime;
         /* store the state in the pcb_t's v0 register */
-        currentProcess->p_state.s_v0 = currentProcess->p_time;
+        (currentProcess->p_state.s_v0) = currentProcess->p_time;
         /* start the clock */
         STCK(TODStart);
         contextSwitch(&(currentProcess->p_state));
 }
 
 /* Syscall 7 */
-HIDDEN void waitForClock(state_PTR state) {
-     int *semaphore;
-     /* get the semaphore index of the clock timer */
-     semaphore = (int*) &(semdTable[PSEUDOCLOCK]);
-     /* perform a p operation */
-     (*semaphore)--;
-     if ((*semaphore) < 0)
-     {
-         /* block the process */
-         insertBlocked(semaphore, currentProcess);
-         /* copy from the old syscall area into the new pcb_state */
-         copyState(state, &(currentProcess->p_state));
-         /* increment the number of waiting processes */
-         softBlockCount++;
-     }
-     /* else invoke scheduler() */
-     scheduler();
+HIDDEN void waitForClock(state_PTR called) {
+
+    /* sempahore index of the clock */
+    int *semaphore = (int*) &(semdTable[PSEUDOCLOCK]);
+    debug(69);
+    /* decrement semaphore */
+    (*semaphore) = (*semaphore)-1;
+    if ((*semaphore) < 0) {
+        /* block the process */
+        insertBlocked(semaphore, currentProcess);
+        /* copy from the old syscall area into the new pcb_state */
+        copyState(called, &(currentProcess->p_state));
+        /* increment the number of waiting processes */
+        softBlockCount++;
+        /* else, call scheduler() */
+        scheduler();
+    }
+    
+    debug(59);
+    contextSwitch(called);
 }
 
 /* Syscall 8 */
@@ -309,7 +320,7 @@ HIDDEN void waitForIODevice(state_PTR state){
 
     /* these devices can't do IO request */
     if (lineNum < DISKNUM || lineNum > TERMINT){
-
+        
         /* terminate */
         terminateProcess();
     }
@@ -372,28 +383,40 @@ HIDDEN void passUpOrDie(state_PTR oldS, int trap){
     /*No cases match. KILL EVERYONE*/
     terminateProcess();
 }
-HIDDEN void helperTerminateProgeny(pcb_PTR p){
+HIDDEN void helperTerminateOffspring(pcb_PTR first){
     /* terminate each progeny */
-    while(!emptyChild(p)){
-        helperTerminateProgeny(removeChild(p));
+    while(!emptyChild(first)){
+        helperTerminateOffspring(removeChild(first));
     }
-
     /* check the pcb_b has a semaphore address */
-    if (p->p_semAdd != NULL){
+    if (first->p_semAdd != NULL){
 
         /* get the sempahore */
-        /*int* sema4 = p->p_semAdd;*/
+        int* sema4 = first->p_semAdd;
 
         /* when sempahore address is found, call outBlocked */
-        outBlocked(p);
+        outBlocked(first);
 
         /* Handle semaphore count when unblocking 
         i.e. softBlockCount and/or (*sem)--
         */
+       if (sema4 >= &(semdTable[0]) && sema4 <= &(semdTable[SEMALLOC-1])){
+           softBlockCount--;
+        } else {
+            (*sema4)++;
     }
-    /* n-1 processes left */
+    
+    if (first == currentProcess){
+        outChild(currentProcess);
+    
+    } else {
+        outProcQ(&readyQueue, first);
+    }
+
+    /* no more offspring, free the process */
+    freePcb(first);
     processCount--;
-    freePcb(p);
+    }
 }
 
 HIDDEN void copyState(state_PTR src, state_PTR dest) {

@@ -123,9 +123,9 @@
 #define TRANSTATUS      2
 #define TRANCOMMAND     3
 
- #define IM  0x0000FF00
- #define TE  0x08000000
-  #define IC 0x00000001         /* Current interrupts */
+#define IM  0x0000FF00
+#define TE  0x08000000
+#define IC 0x00000001         /* Current interrupts */
  
 
 /*Syscall Vals*/
@@ -155,7 +155,6 @@
 #define PRINTERNUM		6
 #define TERMINT		7
 
-#define THOUSANDMS 1000
 #define PERDEV      8       /* each device has 8 sempahores */
 #define DEVNOSEM    3       /* the first three devices don't have 8 sempahores */
 /* device common STATUS codes */

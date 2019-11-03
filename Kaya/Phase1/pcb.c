@@ -244,6 +244,12 @@ whose tail is pointed to by tp. This head should not be removed.
 If there is no process queue, return NULL. */
 pcb_PTR headProcQ(pcb_PTR tp)
 {
+  if (tp == NULL){
+    return NULL;
+  }
+  if ((tp->p_next) == tp){
+    return tp;
+  }
   return (tp->p_next);
 } /* End of headProcQ */
 

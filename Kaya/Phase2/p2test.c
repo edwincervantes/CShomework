@@ -122,6 +122,7 @@ void print(char *msg) {
 	SYSCALL(PASSERN, (int)&term_mut, 0, 0);				/* P(term_mut) */
 	while (*s != EOS) {
 		*(base + 3) = PRINTCHR | (((devregtr) *s) << BYTELEN);
+	/*	addokbuf("hello");*/
 		status = SYSCALL(WAITIO, TERMINT, 0, 0);	
 		if ((status & TERMSTATMASK) != RECVD)
 			PANIC();
@@ -237,7 +238,7 @@ void test() {
 	print("p3 is started\n");
 
 	SYSCALL(PASSERN, (int)&endp3, 0, 0);					/* P(endp3)     */
-
+	
 	SYSCALL(CREATETHREAD, (int)&p4state, 0, 0);				/* start p4     */
 
 	SYSCALL(CREATETHREAD, (int)&p5state, 0, 0); 			/* start p5     */
