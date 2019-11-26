@@ -19,11 +19,11 @@
 /* Sets number of processes avaliable at start */
 #define MAXPROC 20
 #define MAXINT  0xFFFFFFFF
-#define SEMALLOC 49
+#define SEMALLOC 49     /* number of devices using sempahores and a pseudo-time clock (only 1) */
 #define SEMTIMER 50
 #define PSEUDOCLOCK SEMALLOC - 1
 
-
+/* old and new processor state locations */
 /* SYSYCALLS */
 #define SYSCALLNEWAREA 0x200003D4
 #define SYSCALLOLDAREA 0X20000348
@@ -44,6 +44,7 @@
 /* Interrupt handling */
 #define INTERRUPTNEWAREA 0x2000008C
 #define INTERRUPTOLDAREA 0x20000000
+
 #define INTBIT 0x1000003C
 #define INTDEV 0x10000050
 
@@ -60,26 +61,27 @@
 #define TIMESCALEADDR	0x10000024
 
 /* Interrupts */
-/* use bitwise OR to turn on */
+/* to turn on interrupts */
 #define INTERRUPTSON 0x00000004 
+/* to turn on interrupts that current on */
 #define INTERRUPTSCON 0x00000001
-/* use bitwise AND to turn off */
+/* to turn off interrupts */
 #define INTERUPTSOFF 0xFFFFFFFB
-/*~ to turn on private instruction*/
+/* turn on interrupt mask */
+#define IM  0x0000FF00 
+/* to turn on private instruction */
 #define PRIVATEINSTUC 0xFF 
 
 /* Kernel/User */
-/* use bitwise OR to turn on */
+/* turn on for kernel mode */
 #define KERNELMODEON 0x00000004 
-/* use bitwise AND to turn off */
+/* turn off for kernel mode */
 #define KERNELMODEOFF 0xFFFFFFF7
-/*use bitwise OR to turn on*/
+/* turn on for usermode */
 #define USERMODEON 0x00000008
 
 /* all off */
 #define ALLOFF 0x00000000
-#define VMNOTON 0xFDFFFFFF
-#define VMON 0x20000000
 
 /* utility constants */
 #define	TRUE		1
@@ -104,8 +106,8 @@
 
 #define TRAPTYPES	3
 
-#define INTERVALTIME 100000
-#define QUANTUM 5000
+#define INTERVALTIME 100000     /* interval timer period */
+#define QUANTUM 5000    /* CPU burst time */
 
 
 #define DEVREGLEN	4	/* device register field length in bytes & regs per dev */
@@ -123,12 +125,11 @@
 #define TRANSTATUS      2
 #define TRANCOMMAND     3
 
-#define IM  0x0000FF00
-#define TE  0x08000000
-#define IC 0x00000001         /* Current interrupts */
+
+#define TE  0x08000000  /* local timer on */
  
 
-/*Syscall Vals*/
+/* Syscall Vals */
 
 #define CREATEPROCESS 	 1
 #define TERMINATEPROCESS 2
@@ -139,7 +140,7 @@
 #define WAITCLOCK 		 7
 #define WAITIO 			 8
 
- /*device & line number*/
+ /* device & line number */
 #define FIRST 0x1
 #define SECOND 0x2
 #define THIRD 0x4

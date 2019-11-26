@@ -334,13 +334,12 @@ pcb_PTR outChild(pcb_PTR p)
   /* Second case: If removing first child */
   if ((p->p_prnt->p_child) == p)
   {
-    return removeChild(p);
+    return removeChild(p -> p_prnt); /*P_PRNT*/
   }
   /* Third case: P is at the end of the child List */
   if ((p->p_next_sib) == NULL)
   {
-    p->p_prev_sib->p_next_sib = NULL; /*Something bad is happening here that causes a kernel panic*/
-
+    p->p_prev_sib->p_next_sib = NULL; 
     return p;
   }
   /* Fourth case: P is a middle child */

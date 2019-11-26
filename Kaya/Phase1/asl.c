@@ -13,7 +13,7 @@ and max (addr the maximum largest unsigned integer value).
 /* h files to include */
 #include "../h/types.h"
 #include "../h/const.h"
-
+#include "../e/initial.e"
 /* e files to include */
 #include "../e/pcb.e"
 
@@ -230,7 +230,7 @@ pcb_PTR removeBlocked (int *semAdd){
     return NULL;
 } /* End of removeBlocked */
 
-/* Remove the ProcBlk pointed to by p from the process queue asso-ciated with
+/* Remove the ProcBlk pointed to by p from the process queue associated with
 p’s semaphore (p→psemAdd) on the ASL. If ProcBlkpointed to by p does not appear
 in the process queue associated withp’s semaphore, which is an error condition,
 return NULL; otherwise,return p. */
@@ -239,7 +239,7 @@ pcb_PTR outBlocked (pcb_PTR p){
     pcb_PTR outPcb;
     /* Get the location of the semaphore */
     temp = searchSemAdd(p->p_semAdd);
-    if((temp != NULL) && (temp->s_next->s_semAdd == (p->p_semAdd))){
+    if((temp != NULL) && ((temp->s_next->s_semAdd) == (p->p_semAdd))){
 
         outPcb = outProcQ(&(temp->s_next->s_procQ), p);
         /* Condition to check if the newly removed pcb_t is allowing the
@@ -258,7 +258,10 @@ pcb_PTR outBlocked (pcb_PTR p){
     return NULL;
 } /* End of outBlocked */
 
-/* Returns a pointer to the ProcBlk that is at the head of the pro-
+
+
+
+/*  a pointer to the ProcBlk that is at the head of the pro-
 cess queue associated with the semaphore semAdd. Return NULL
 if semAdd is not found on the ASL or if the process queue associ-
 ated with semAdd is empty. */

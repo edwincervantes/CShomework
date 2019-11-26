@@ -1,43 +1,24 @@
 
-/********************************************************************************************************************************
-                              ~initial.c~
-              Written By Solomon G and Edwin Cervantes
-initial.c is our nucleus initialization or entry point for the OS Kaya. Our checklist is as follows
-    -Set the PC to the address of our nucleus function that is to handle exceptions of that type
-    -Set the $SP to the RAMTOP
-    -Set the Status register to mask all interrupts, turn VM off, enable processor Local Timer, and be in Kernel Mode
-    -Initialize initPCB() and initSemd()
-    -Initialize Process Count, Soft-block Count, Ready Queue, and Current Process
-    -Initialize all nucleus maintained semaphores
-    -Instantiate a single process and place its ProcBlk in the Ready Queue
-    -Call the scheduler
-Phase 2 Global Vars
-    -processCount(int)
-    -softBlockCount(int)
-    -currentProcess(pcb_PTR)
-    -readyQueue(pcb_PTR)
-*********************************************************************************************************************************/
+/*********************************************** INITIAL.C ******************************************************/
+/****************************************************************************************************************/
 
-/*Boot code for Operating System
-    -Populate the four new areas in low memory to facilitate correct operation of a context switch
-        -Set the $SP to the last page of physical memory
-        -Set PC to the appropriate function
-        -Set the status: VM-off, Interrupts-masked, Supervisor mode-on
-    -initPCB()
-    -initASL()
-    -initialize Phase 2 global Vars
-    -p = allocatePCB()
-        -initialize p_state
-            -Set stack pointer to the penultimate page of physical memory
-            -Set PC to (p2test)
-            -Set status from above
-        -processCount++
-        -insertProcQ(&readyQueue, p)
-        -scheduler()
-*/
+/*  Initial.c is our nucleus initialization or entry point for Kaya,
+    which takes control when our machine is turned on. It has an initial call of the function main().
+    In this .c file, we initialize global variables, and physical memory locations. 
+    In addition, it provides the core functionality of basic Operating System that includes global 
+    variables and data structures that manage the flow of our processes (readyQue, procCount, semdTable, 
+    currentProcess, softBlockCount, etc.).
+    
+    
+    ==== Written By Solomon G and Edwin Cervantes ==== */
+/****************************************************************************************************************/
+
+
+/*********************************************** #INCLUDE MODULES ***********************************************/
 /* h files to include */
 #include "../h/const.h"
 #include "../h/types.h"
+
 /* e files to include */
 #include "../e/pcb.e"
 #include "../e/asl.e"
@@ -45,11 +26,12 @@ Phase 2 Global Vars
 #include "../e/interrupts.e"
 #include "../e/exceptions.e"
 #include "../e/scheduler.e"
+
 /* include the µmps2 library */
 #include "/usr/local/include/umps2/umps/libumps.e"
+/****************************************************************************************************************/
 
-/* Global variables as follows */
-
+/*********************************************** GLOBAL VARIABLES ***********************************************/
 /* current process count */
 int processCount;
 
@@ -62,55 +44,50 @@ pcb_PTR currentProcess;
 /* ready queue processes */
 pcb_PTR readyQueue;
 
+/* sem table for 49 devices */
 int semdTable[SEMALLOC];
+/***************************************************************************************************************/
 
+/* Importing test file to get the mem address of the function in mikey's p2test file. */
 extern void test();
 
-int debug (int val){
-    return val;
-}
 
+/* Parameters: N/A*/
+/* Returns: N/A */
 int main() {
-    int i;
-    unsigned int RAMTOP;
-        
-    /* defining the rdev register area*/
-    devregarea_PTR registerBus;
 
-    state_PTR newState;
-
-
-
-    /* initialize global variables defined above */
-    readyQueue = mkEmptyProcQ();
-    currentProcess = NULL;
-    processCount = 0;
-    softBlockCount = 0;
+    /* ==== LOCAL VARIABLES ==== */
+    int i; /* Used to initialize semdTable */
+    unsigned int RAMTOP; /* Max RAM */ 
+    devregarea_PTR registerBus; /* defining the rdev register area */
+    state_PTR newState; /* State */
+    /***********************************************************************************************************/
 
     registerBus = (devregarea_PTR) RAMBASEADDR;
 
     RAMTOP = (registerBus->rambase) + (registerBus->ramsize);
 
-    for( i = 0; i < SEMALLOC; i++){
-        /* initialize every semaphore with a starting address of 0 */
+    /* ==== INITIALIZE SEMPAHORES FOR SYNCHRONIZATION ==== */
+    /* with a starting address of 0 */
+    for(i = 0; i < SEMALLOC; i++){ 
         semdTable[i] = 0;
     }
-    /* a pointer to locate areas of the memory */
-    /*newState = (state_PTR) MEMAREA;*/
+    /***********************************************************************************************************/
 
     /* This is the syscall area */
     newState = (state_PTR) SYSCALLNEWAREA;
     newState->s_status = ALLOFF;
     newState->s_sp = RAMTOP;
-    newState->s_pc = (memaddr) syscallHandler; /* syscallHandler */
-    newState->s_t9 = (memaddr) syscallHandler; /* syscallHandler */
+    newState->s_pc = (memaddr) syscallHandler;
+    newState->s_t9 = (memaddr) syscallHandler;
 
-    /* This is the Prog trap area */
+    /* This is the progtrap area */
     newState = (state_PTR) PRGMTRAPNEWAREA;
     newState->s_status = ALLOFF;
     newState->s_sp = RAMTOP;
-    newState->s_pc = (memaddr) progTrapHandler; /* progTrapHandler */
-    newState->s_t9 = (memaddr) progTrapHandler;/* progTrapHandler */
+    newState->s_pc = (memaddr) progTrapHandler;
+    newState->s_t9 = (memaddr) progTrapHandler;
+
 
     /* This is the tblmgmt area */
     newState = (state_PTR) TBLMGMTNEWAREA;
@@ -126,20 +103,26 @@ int main() {
     newState->s_pc = (memaddr) interruptHandler;
     newState->s_t9 = (memaddr) interruptHandler; 
 
-      /* initialize ASL and PCB */
+    /* initialize the data structures (PCB & ASL) */
     initPcbs();
     initASL();
    
-  
+    /* ==== INITIALIZE VARIABLES ==== */
+    readyQueue = mkEmptyProcQ();
+    currentProcess = NULL;
+    processCount = 0;
+    softBlockCount = 0;
+    /***********************************************************************************************************/
 
-
+    /* Set up */
     currentProcess = allocPcb();
     processCount++;
 
-    /*If currproc =! NULL*/
     currentProcess->p_state.s_sp = (RAMTOP - FRAMESIZE);
     currentProcess->p_state.s_pc = (memaddr) test;
     currentProcess->p_state.s_t9 = (memaddr) test;
+
+
     currentProcess->p_state.s_status = (ALLOFF | INTERRUPTSON | IM | TE);
 
 
@@ -149,12 +132,14 @@ int main() {
     /* the new process is in the queue */
     currentProcess = NULL;
 
-
-    /* load an interval time*/
+    /* load an interval time */
     LDIT(INTERVALTIME);
 
     /* Call the scheduler */
     scheduler();
 
-    return -1; /*We get a warning if we don't return a value*/
+    /* We get a warning if we don't return a value */
+    return -1; 
 }
+/******************************************* END OF INITIAL.C **************************************************/
+/***************************************************************************************************************/

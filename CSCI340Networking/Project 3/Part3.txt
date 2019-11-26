@@ -1,0 +1,11 @@
+1)ICMP type - 8 (echo ping request
+Code numbers - 0
+This matches what I created in the program as I had specified all of this
+
+
+2)ICMP type - 0 (echo ping reply
+Code numbers - 0
+This matches what I created in the program as I had specified all of this. There is no warning and everything is good to be checked
+
+
+3) They target_addr is different when running it throught the program. I assume it is the name of a server while if you were to ping it like normal it would appear as just google.com

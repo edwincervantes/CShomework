@@ -1,7 +1,6 @@
-/********************************************************************************************************************************
-
-                              ~interrupts.c~
-              Written By Solomon G and Edwin Cervantes
+/*********************************************** INTERRUPTS.C *******************************************************/
+/********************************************************************************************************************/
+/*
 
 This module implements the device interrupt exception
 handler. This module will process all the device interrupts, including In-
@@ -43,8 +42,12 @@ ACK the interrupt
     -set the command field to ACK
 
 Return control to the process that was executing at the time of the Interrupt
+*/
 
-*********************************************************************************************************************************/
+        /* ==== Written By Solomon G and Edwin Cervantes ==== */
+/********************************************************************************************************************/
+
+/*********************************************** #INCLUDE MODULES ***************************************************/
 #include "../h/const.h"
 #include "../h/types.h"
 #include "../e/initial.e"
@@ -54,18 +57,30 @@ Return control to the process that was executing at the time of the Interrupt
 #include "/usr/local/include/umps2/umps/libumps.e"
 
 
+/********************************************************************************************************************/
 
-/*Local functions we'll need later on*/
+/*********************************************** GLOBAL VARIABLES ***************************************************/
+extern int semdTable[SEMALLOC];
+extern int softBlockCount;
+extern pcb_PTR currentProcess;
+extern pcb_PTR readyQueue;
+
+
+
+/********************************************************************************************************************/
+
+
+/*********************************************** LOCAL FUNCTIONS ***************************************************/
 HIDDEN int getDevNumber(unsigned int* bitmap);
 HIDDEN void copyState(state_PTR src, state_PTR dest);
 HIDDEN void exitHandler(cpu_t startTime);
+
+
 /*
-
+Parameters: N/A
+Returns: N/A
 */
-
-
 void interruptHandler(){
-    
     cpu_t startTime, endTime; /*Used to find out how much time we spend in our IHandler*/
     unsigned int causeReg, deviceNumber, lineNumber; /*Cause register, line, and device*/
     device_PTR deviceReg; /*device register*/
@@ -88,133 +103,209 @@ void interruptHandler(){
 
     lineNumber = 0;
 
-    
     /*Checking to see where the interrupt occured*/
 
     /*This should never happen in Kaya OS. Invoke PANIC()*/
     if((causeReg & FIRST) != 0){/*Multi-Core*/
+
         PANIC();
+
     }
 
-    else if ((causeReg & SECOND) != 0){/*Clock. Time over, invoke scheduler*/
+    else if ((causeReg & SECOND) != 0){/* Clock. Time over, invoke scheduler */
+
         exitHandler(startTime);
+
     }
+
     else if ((causeReg & THIRD) != 0){/*Clock*/
-        debug(700);
-        LDIT(INTERVALTIME); /*Loading 100ms*/
-        sema4 = (int*) &(sema4[PSEUDOCLOCK]); /*Lets get to unblocking the sema4*/
+
+        LDIT(INTERVALTIME); /*Loading 100000ms*/
+
+        sema4 = (int*) &(semdTable[PSEUDOCLOCK]); /*Lets get to unblocking the sema4*/
+
         while(headBlocked(sema4) != NULL){
+
             p = removeBlocked(sema4);
+
             STCK(endTime);
+
             if(p != NULL){
-                debug (393);
-                insertProcQ(&readyQueue, p); /*Inserting*/
-                (p->p_time) = (p->p_time) + (endTime - startTime); /*Time stuff*/
+
+                insertProcQ(&readyQueue, p); /* Inserting */
+
+                (p->p_time) = (p->p_time) + (endTime - startTime); /* Time stuff */
+
                 softBlockCount = softBlockCount - 1;
+
             }
         }
-        *sema4 = 0;
+        *(sema4) = 0;
+
         exitHandler(startTime);
     }
+
     else if ((causeReg & FOURTH) != 0){/*Disk*/
+
         lineNumber = DISKNUM;
+
     }
+
     else if ((causeReg & FIFTH) != 0){/*Tape*/
+
         lineNumber = TAPENUM;
+
     }
+
     else if ((causeReg & SIXTH) != 0){/*Network*/
+
         lineNumber = NETWORKNUM;
+
     }
+
     else if ((causeReg & SEVENTH) != 0){/*Printer*/
+
         lineNumber = PRINTERNUM;
+
     }
+
     else if ((causeReg & EIGHTH) != 0){/*Terminal*/
+
         lineNumber = TERMINT;
+
+    } else {
+
+        PANIC();
+
     }
+    
     /*Fetch device number. Subtract 3 since first 3 devices do not count*/
     deviceNumber = getDevNumber((unsigned int*)(INTBIT + ((lineNumber - THREE) * LENGTHWORD)));
 
     /*Do we even need an interrupt*/
     if (deviceNumber == INTNOTNEEDED){
+
         PANIC();
+
     }
     /*Lets go get the register*/
-    deviceReg = (device_PTR) (INTDEV +((lineNumber - THREE) * DEVREGSIZE * EIGHT) + (deviceNumber * DEVREGSIZE));
+    deviceReg = (device_PTR) (INTDEV +((lineNumber - THREE) * 0x80) + (deviceNumber * 0x10));
 
     /*If not a terminal*/
     if(lineNumber != 7){
+
         statusOfReg = deviceReg -> d_status; /*Store away device status*/
+
         deviceReg -> d_command = ACK; /*Send ACK message*/
+
         i = EIGHT * (lineNumber - THREE) + deviceNumber; /*Fidning the semaphore we need to perform a V opertaion on*/
 
     }else{ /*i.e.: We have a terminal interrupt. Write on 3, 4, and 5, read otherwise*/
+
         int transm = (deviceReg -> t_transm_status & PRIVATEINSTUC);
+
         if(transm == 3 || 4 || 5){
-            i = (EIGHT *(lineNumber - THREE) + deviceNumber); /*Get index*/
+
+            i = (EIGHT *(lineNumber - THREE)) + deviceNumber; /*Get index*/
+
             statusOfReg = deviceReg -> t_transm_status; /*store away status*/
+
             deviceReg -> t_transm_command = ACK; /*ACK it*/
+
         }else{
+
             i = (EIGHT *(lineNumber - THREE + 1) + deviceNumber); /*Get index*/
+
             statusOfReg = deviceReg -> t_recv_status; /*store away status. When recieving*/
+
             deviceReg -> t_recv_command = ACK; /*ACK it*/
         }
     }
     /*Finally time to V the semaphore we want*/
     sema4 =&(semdTable[i]);
-    (*sema4) = (*sema4) +1;
+
+    (*sema4) = (*sema4) + 1;
 
     /*wake up*/
     if((*sema4) <= 0){
+
         p = removeBlocked(sema4);
-    
+
         if(p != NULL){
+
             p -> p_state.s_v0 = statusOfReg; 
+
             insertProcQ(&readyQueue, p);
+
             softBlockCount = softBlockCount - 1;
         }
+    } else {
+        
     }
+
     exitHandler(startTime);
+
     }
 
 
-/*Get the device numner*/
-HIDDEN int getDevNumber(unsigned int* bitMap){
-	unsigned int alarm = *bitMap;
-	if((alarm & FIRST) != 0) {
-		return 0;
-	}
+/*
+Parameters: uint(bitmap)
+Returns: int
+*/
 
+HIDDEN int getDevNumber(unsigned int* bitMap){
+
+	unsigned int alarm = *bitMap;
+
+	if((alarm & FIRST) != 0) {
+
+		return 0;
+
+	}
 	else if((alarm & SECOND) != 0){
+
 		return 1;
+
 	}
 
 	else if((alarm & THIRD) != 0){
+
 		return 2;
+
 	}
 
 	else if((alarm & FOURTH) != 0){
+
 		return 3;
+
 	}
 
 	else if((alarm & FIFTH) != 0){
+
 		return 4;
+
 	}
 
 	else if((alarm & SIXTH) != 0){
+
 		return 5;
+
 	}
 
 	else if((alarm & SEVENTH) != 0){
+
 		return 6;
+
 	}
 
 	else if((alarm & EIGHTH) != 0){
-		return 7;
-	}
-    else{
-        return -1;
-    }
 
+		return 7;
+
+	}
+
+    return -1;
+    
 }    
 
 
@@ -223,20 +314,33 @@ HIDDEN int getDevNumber(unsigned int* bitMap){
  Return to scheduler
  Goodbye
  */   
+/*
+Parameters: cpu_t
+Returns: N/A
+*/
 HIDDEN void exitHandler(cpu_t startTime){
+
     cpu_t endTime;
+
     state_PTR inter = (state_PTR) INTERRUPTOLDAREA;
-    /*Check to see if we're waiting. Boring*/
-    if(currentProcess != NULL){
+    
+    if(currentProcess != NULL){ /*Check to see if we're waiting. Boring*/
+
         STCK(endTime);
+
         TODStart = TODStart + (endTime - startTime); /*Charge time used in handler and add to TOD*/
+
         copyState(inter, &(currentProcess -> p_state));
+
         insertProcQ(&readyQueue, currentProcess);
     }
+
     scheduler();
+
 }
 
 HIDDEN void copyState(state_PTR src, state_PTR dest) {
+
     int i;
 
     /* id */
@@ -258,6 +362,5 @@ HIDDEN void copyState(state_PTR src, state_PTR dest) {
     }
 }
 
-
-
-
+/******************************************* END OF ITERRUPTS.C **************************************************/
+/***************************************************************************************************************/

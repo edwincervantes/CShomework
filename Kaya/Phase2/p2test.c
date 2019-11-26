@@ -225,8 +225,7 @@ void test() {
 
 	print("p2 was started\n");
 
-	SYSCALL(VERHOGEN, (int)&startp2, 0, 0);					/* V(startp2)   */
-
+	SYSCALL(VERHOGEN, (int)&startp2, 0, 0);					/* V(startp2)   */ 
 	SYSCALL(PASSERN, (int)&endp2, 0, 0);					/* P(endp2)     */
 
 	/* make sure we really blocked */
@@ -247,8 +246,7 @@ void test() {
 
 	SYSCALL(CREATETHREAD, (int)&p7state, 0, 0);				/* start p7		*/
 
-	SYSCALL(PASSERN, (int)&endp5, 0, 0);					/* P(endp5)		*/ 
-
+	SYSCALL(PASSERN, (int)&endp5, 0, 0);					/* P(endp5)		*/
 	print("p1 knows p5 ended\n");
 
 	SYSCALL(PASSERN, (int)&blkp4, 0, 0);					/* P(blkp4)		*/
@@ -279,9 +277,7 @@ void p2() {
 	int		i;				/* just to waste time  */
 	cpu_t	now1,now2;		/* times of day        */
 	cpu_t	cpu_t1,cpu_t2;	/* cpu time used       */
-
 	SYSCALL(PASSERN, (int)&startp2, 0, 0);				/* P(startp2)   */
-
 	print("p2 starts\n");
 
 	/* initialize all semaphores in the s[] array */
@@ -322,9 +318,7 @@ void p2() {
 	}
 
 	p1p2synch = 1;				/* p1 will check this */
-
 	SYSCALL(VERHOGEN, (int)&endp2, 0, 0);				/* V(endp2)     */
-
 	SYSCALL(TERMINATETHREAD, 0, 0, 0);			/* terminate p2 */
 
 	/* just did a SYS2, so should not get to this point */
@@ -451,6 +445,7 @@ void p5prog() {
 
 /* p5's memory management trap handler */
 void p5mm(unsigned int cause) {
+
 	print("memory management trap\n");
 	mstat_o.s_status = (mstat_o.s_status & VMOFF) | KUPBITON;  /* VM off, user mode on */
 	mstat_o.s_pc = mstat_o.s_t9 = (memaddr)p5b;  /* return to p5b */
@@ -472,7 +467,7 @@ void p5sys(unsigned int cause) {
 		break;
 	}
 	sstat_o.s_pc = sstat_o.s_pc + 4;   /*	 to avoid SYS looping */
-	LDST(&sstat_o);
+	LDST(&sstat_o); /*Were craching here. HELP US LORD MIKEY*/
 }
 
 /* p5 -- SYS5 test process */
@@ -482,12 +477,15 @@ void p5() {
 	/* set up higher level TRAP handlers (new areas) */
 	STST(&pstat_n);
 	pstat_n.s_pc = pstat_n.s_t9 = (memaddr)p5prog;
+
 	
 	STST(&mstat_n);
 	mstat_n.s_pc = mstat_n.s_t9 = (memaddr)p5mm;
+
 	
 	STST(&sstat_n);
 	sstat_n.s_pc = sstat_n.s_t9 = (memaddr)p5sys;
+
 
 	/* trap handlers should operate in complete mutex: no interrupts on */
 	/* this because they must restart using some BIOS area */
@@ -497,9 +495,10 @@ void p5() {
 	SYSCALL(SPECTRAPVEC, PROGTRAP, (int)&pstat_o, (int)&pstat_n);
 
 	SYSCALL(SPECTRAPVEC, TLBTRAP, (int)&mstat_o, (int)&mstat_n);
-
-	SYSCALL(SPECTRAPVEC, SYSTRAP, (int)&sstat_o, (int)&sstat_n);
 	
+	SYSCALL(SPECTRAPVEC, SYSTRAP, (int)&sstat_o, (int)&sstat_n);
+	/*We don't get past here in p5*/
+
 	/* to cause a pgm trap access some non-existent memory */	
 	*p5MemLocation = *p5MemLocation + 1;		 /* Should cause a program trap */
 }
@@ -620,7 +619,6 @@ void p8leaf() {
 	print("leaf process starts\n");
 	
 	SYSCALL(VERHOGEN, (int)&endcreate, 0, 0);
-
 	SYSCALL(PASSERN, (int)&blkp8, 0, 0);
 }
 

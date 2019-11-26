@@ -1,0 +1,13 @@
+1. When the program is ran we get a print statement saying "Xavier CS web server is up!"
+
+2. import subprocess
+import shlex	//Import Python libraries
+
+cmd   = "ping -c 1 www.cs.xu.edu"	//Here we set a ping to xaviers webserver Cerebro	
+
+args = shlex.split(cmd)	//Go ahead and send the ping
+try:
+    subprocess.check_call(args,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    print ("Xavier CS web server is up!")	//If the ping works, we print this
+except subprocess.CalledProcessError:
+    print ("Failed to get ping.")	//Ping is no good print this

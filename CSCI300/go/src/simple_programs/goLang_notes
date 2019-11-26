@@ -2,6 +2,8 @@
 
 - Scripts are labeled as ________.go scripts
 
+- Navigate to parent directory of .go script
+
 - Use "go build" to build an executable script for your .go script
 
 - Execute using "./______" where _______ is the name of the script (without .go)
