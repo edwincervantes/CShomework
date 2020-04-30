@@ -82,6 +82,7 @@
 
 /* all off */
 #define ALLOFF 0x00000000
+#define CURRENTVM   0x01000000
 
 /* utility constants */
 #define	TRUE		1
@@ -96,10 +97,30 @@
 
 #define NULL ((void *)0xFFFFFFFF)
 
+/*Page table stuff*/
+#define KUSEGPTESIZE	32
+#define KSEGOSPTESIZE	64
+#define MAXUSERPROC     1       /*Let's start with one User Process like Mikey recommends*/
+#define POOLSIZE        3 * MAXUSERPROC
+#define PAGESIZE		4096	
+#define SEGSTART		0x20000500
+#define SEGWIDTH		12
+#define OSPAGES		KSEGOSPTESIZE
+
+#define OSSIZE		(OSPAGES * PAGESIZE)
+#define KSEGOSLAST 	(ROMPAGESTART + OSSIZE)
+#define PAGETABNUM      0x2A
+#define DIRTYON		0x00000400
+#define VALIDON		0x00000200
+#define GLOBALON	0x00000100
+#define TAPEBUFF 	8
+#define DISKBUFF
+#define TAPEBUFFSTART	(KSEGOSLAST - (((DISKBUFF + TAPEBUFF) * PAGESIZE)))
 
 /* vectors number and type */
 #define VECTSNUM	4
-
+#define SHIFTTWELVE 12
+#define SHIFTSIX    6
 #define TLBTRAP		0
 #define PROGTRAP	1
 #define SYSTRAP		2
@@ -108,6 +129,10 @@
 
 #define INTERVALTIME 100000     /* interval timer period */
 #define QUANTUM 5000    /* CPU burst time */
+
+
+#define TLBTWO      2
+#define TLBTHREE    3
 
 
 #define DEVREGLEN	4	/* device register field length in bytes & regs per dev */
@@ -125,10 +150,6 @@
 #define TRANSTATUS      2
 #define TRANCOMMAND     3
 
-
-#define TE  0x08000000  /* local timer on */
- 
-
 /* Syscall Vals */
 
 #define CREATEPROCESS 	 1
@@ -139,6 +160,17 @@
 #define GETCPUTIME 		 6
 #define WAITCLOCK 		 7
 #define WAITIO 			 8
+#define READ_FROM_TERMINAL 9
+#define WRITE_TO_TERMINAL 10
+#define V_VIRTUAL_SEMAPHORE 11
+#define P_VIRTUAL_SEMAPHORE 12
+#define DELAY           13
+#define DISK_PUT        14
+#define DISK_GET        15
+#define WRITE_TO_PRINTER 16
+#define GET_TOD         17
+#define TERMINATE       18
+
 
  /* device & line number */
 #define FIRST 0x1
@@ -150,11 +182,37 @@
 #define SEVENTH	0x40
 #define EIGHTH 0x80
 
+#define DISKCOUNT        8
 #define DISKNUM			3
 #define TAPENUM 		4
 #define NETWORKNUM		5
 #define PRINTERNUM		6
 #define TERMINT		7
+
+#define SEEK        2
+
+#define TE  0x08000000  /* local timer on */
+
+
+/* Phase 3 addr */
+#define PAGE52ADDRESS 	0x8000000B
+#define LASTSEG2PG 	0xC0000000
+#define DEVICEREG 	0x10000050
+
+/* For Phase 3 purpose */
+#define OSEND 			(FRAMESIZE * KSEGOSPTESIZE)
+#define KSEGEND 		(ROMPAGESTART + OSEND)
+#define BITNOTNEEDEDMASKED 	0x00000FC0
+#define BUFFER 	(KSEGEND - (DISKCOUNT * PAGESIZE))
+#define TAPEDEV (((TAPENUM-3) * DEVREGSIZE * DEVPERINT) + DEVICEREG)
+#define DISKDEV (((DISKNUM-3) * DEVREGSIZE * DEVPERINT) + DEVICEREG)
+#define PRINTDEV (((PRINTERNUM - 3) * DEVREGSIZE * DEVPERINT) + DEVICEREG)
+#define TERMINALDEV (((TERMINT-3) * DEVREGSIZE * DEVPERINT) + DEVICEREG)
+ 
+
+
+
+
 
 #define PERDEV      8       /* each device has 8 sempahores */
 #define DEVNOSEM    3       /* the first three devices don't have 8 sempahores */

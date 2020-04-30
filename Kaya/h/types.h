@@ -65,6 +65,43 @@ typedef struct {
 	unsigned int d_data1;
 } device_t, *device_PTR;
 
+typedef struct pteE_t {
+	unsigned int	entryHI;
+	unsigned int	entryLO;
+} pteE_t;
+
+typedef struct pteOS_t {
+	int 		header;
+	pteE_t	pteTable[KSEGOSPTESIZE];
+} pteOS_t;
+
+typedef struct pte_t {
+	int				header;
+	pteE_t		pteTable[KUSEGPTESIZE];
+} pte_t;
+
+
+typedef struct segTab_t {
+	pteOS_t			*ksegOS;
+	pte_t			*kUseg2;
+	pte_t			*kUseg3;
+} segTab_t, *segTabPTR;
+
+typedef struct pool_t {
+	int			asid;
+	int			segNo;
+	int			pageNo;
+	pteE_t	    *pte;
+} pool_t;
+
+typedef struct trapProc_t {
+	int			Tp_sem;
+	pte_t		Tp_pte;
+	int			Tp_backStoreAddr;
+	state_t		Tnew_trap[TRAPTYPES];
+	state_t		Told_trap[TRAPTYPES];
+} trapProc_t, *trapProc_tPTR;
+
 #define t_recv_status		d_status
 #define t_recv_command		d_command
 #define t_transm_status		d_data0

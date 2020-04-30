@@ -2,6 +2,8 @@
     "C_Cpp.errorSquiggles": "Enabled",
     "git.ignoreLimitWarning": true,
     "files.associations": {
-        "const.h": "c"
+        "*.e": "c",
+        "const.h": "c",
+        "ADL.C": "cpp"
     }
 }

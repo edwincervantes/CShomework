@@ -7,7 +7,7 @@ import "fmt"
 //Returns: N/A
 func happyBirdthday( name chan string) {
 
-		fmt.Println("Happy Birthday" + <-name + "!!!!!!")
+		fmt.Println("Happy Birthday " + <-name + "!!!!!!")
 
 }
 
