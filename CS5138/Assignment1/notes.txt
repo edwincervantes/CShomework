@@ -1,0 +1,47 @@
+See github for assignment:
+https://github.com/hawkinsw/CS5138/tree/main/Assignment1
+
+Goal: Convert virtual addresses to pointers into disk. 
+Given a valid file/path of a 32-bit PE file and a valid target virtual addresses
+
+Example: 
+cmd: ./vapid sample.exe 0x4c5002
+output: 0x4c5002 -> 0xc0602
+
+Important topics and definitions:
+Section - The basic unit of code or data within a PE or file, each section has a section header
+
+IMAGE_NT_HEADER - PE-32 file's PE Header
+
+e_lfanew - location of the PE-32 file's PE Header on disk
+
+IMAGE_DOS_HEADER - Very beginning of the file
+
+NumberOfSections - The number of sections and section headers in any PE-32 file inside the IMAGE_FILE_HEADER
+
+IMAGE_SECTION_HEADER - Metadata about a section. The most crucial elements of that metadata are the location and size of the contents of that section on disk and the location to place the contents of the section in memory when the program is loaded by the operating system.
+
+PointerToRawData - The address of the beginning of the contents of the section on disk. It is a file pointer
+
+VirtualAddress - This is the address of the beginning of the contents of the section when the program is loaded in memory.
+
+Base Address - You can find this by looking for the field ImageBase in the IMAGE_OPTIONAL_HEADER
+
+Relative Virtual Address - Address of an item after it is loaded into memory with the base address of the image file subtracted from it.
+
+Finding the Target Section:
+Examine all the sections in the PE file to see in which section the target virtual address will fall when the PE file is loaded in to memory.
+To find the target section you will find the section whose VirtualAddress (Stored as an RVA) field is less than our target virtual address
+ VirtualAddress + VirtualSize) and is greater than our target virtual address.
+
+The Home Stretch:
+After finding the target section, you need to subtract the value in that section's header data structure's VirtualAddress field from the target 
+virtual address. The result of that calculation is an offset into that section from its beginning. If you had a file pointer to the beginning of the target section, you could add this offset to that value and the conversion would be complete.
+Finally add the offset you found into the value of PointerToRawData (in the target section's header data structure)
+To get a target file pointer equivalent to our target virtual address.
+
+Plan of Attack:
+Get the following variables:
+    VirtualAddress (RVA)
+    VirtualSize(SectionSize)
+    PointerToRawData
