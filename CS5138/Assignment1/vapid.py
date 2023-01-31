@@ -2,8 +2,10 @@
 # Edwin Cervantes
 # Assignment 1 - Vapid
 # Run PyLint before turning in
-import sys
 import os
+# Might require a pip install, https://bufferoverflows.net/exploring-pe-files-with-python/
+import pefile
+import sys
 
 
 def is_hex(s):
@@ -38,17 +40,28 @@ def check_tva(tva):
     return valid_tva
 
 
+def check_32bit(pe):
+    bits = True
+    if not hex(pe.FILE_HEADER.Machine) == '0x14c':
+        bits = False
+    return bits
+
 if __name__ == "__main__":
     # Get the total number of args passed to the demo.py
     vapid_args = list(sys.argv)
+
     if not valid_args(vapid_args):
         exit(1)
+
     exe_path = vapid_args[1]
     target_virtual_addr = vapid_args[2]
+    pe = pefile.PE(exe_path)
+
     if not check_tva(target_virtual_addr):
         print("{} -> ???".format(target_virtual_addr))
 
-    # Get the arguments list
+    if not check_32bit(pe):
+        print("{} must be a 32-bit .exe")
 
 else:
     print("Whoops")
