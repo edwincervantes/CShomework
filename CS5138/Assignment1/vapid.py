@@ -46,6 +46,7 @@ def check_32bit(pe):
         bits = False
     return bits
 
+
 if __name__ == "__main__":
     # Get the total number of args passed to the demo.py
     vapid_args = list(sys.argv)
