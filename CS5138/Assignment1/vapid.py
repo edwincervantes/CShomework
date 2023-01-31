@@ -47,6 +47,25 @@ def check_32bit(pe):
     return bits
 
 
+def get_entry_point(pe):
+    return hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
+
+
+def get_image_base(pe):
+    return hex(pe.OPTIONAL_HEADER.ImageBase)
+
+
+def get_sections(pe):
+    section_dir = {}
+    for section in pe.sections:
+        val = []
+        val.append(hex(section.VirtualAddress))
+        val.append(hex(section.Misc_VirtualSize))
+        val.append(section.SizeOfRawData)
+        section_dir[section.Name.decode("utf-8").replace("\x00", "")] = val
+    return section_dir
+
+
 if __name__ == "__main__":
     # Get the total number of args passed to the demo.py
     vapid_args = list(sys.argv)
@@ -63,6 +82,11 @@ if __name__ == "__main__":
 
     if not check_32bit(pe):
         print("{} must be a 32-bit .exe")
+
+    addr_of_entry_point = get_entry_point(pe)
+    image_base = get_image_base(pe)
+    sections = get_sections(pe)
+    print(sections['.text'])
 
 else:
     print("Whoops")
