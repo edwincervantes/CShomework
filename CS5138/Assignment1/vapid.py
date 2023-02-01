@@ -23,7 +23,6 @@ def valid_args(vap_args):
         print("Incorrect number of arguments. Expected 2, and got {}".format(len(vap_args) - 1))
         flag = False
     if not os.path.exists(vap_args[1]):
-        # Maybe we should check if it is an exe here or when we get the header info
         print("{} is not a valid path".format(vap_args[1]))
         flag = False
     # Check if hex then check if decimal
@@ -55,17 +54,41 @@ def get_image_base(pe):
     return hex(pe.OPTIONAL_HEADER.ImageBase)
 
 
-def get_sections(pe, base_addr):
+def get_sections(pe, image_base):
     section_dir = {}
     for section in pe.sections:
         rva_addr = hex(section.VirtualAddress)
-        va_addr = hex(int(rva_addr, 16) + int(base_addr, 16))
+        va_addr = hex(int(rva_addr, 16) + int(image_base, 16))
         val = []
         val.append(rva_addr)
         val.append(va_addr)
         val.append(hex(section.PointerToRawData))
         section_dir[section.Name.decode("utf-8").replace("\x00", "")] = val
     return section_dir
+
+
+def get_target_section(sections, addr_of_entry_point, image_base):
+    target_section_addr = hex(int(addr_of_entry_point, 16) + int(image_base, 16))
+    target_section = ''
+    for key in sections:
+        curr = sections[key][1]
+        if int(target_section_addr, 16) > int(curr, 16):
+            target_section = key
+
+    return (target_section, target_section_addr)
+
+
+def get_offset_target_section(sections, target_section, target_virtual_addr):
+    start_va = sections[target_section][1]
+    print("offset: {}".format(hex(int(target_virtual_addr, 16) - int(start_va, 16))))
+    return hex(int(target_virtual_addr, 16) - int(start_va, 16))
+    
+
+def get_physical_start(sections, offset_target_section, target_section):
+    physical_section_start = sections[target_section][2]
+    print(target_section)
+    return hex(int(physical_section_start, 16) + int(offset_target_section, 16))
+
 
 
 if __name__ == "__main__":
@@ -85,11 +108,13 @@ if __name__ == "__main__":
     if not check_32bit(pe):
         print("{} must be a 32-bit .exe")
 
-    addr_of_entry_point = get_entry_point(pe)
-    image_base = get_image_base(pe)
-    sections = get_sections(pe, image_base)
-    print(sections)
-
+    addr_of_entry_point = get_entry_point(pe)   # Get entry point
+    image_base = get_image_base(pe)     # Get image base
+    sections = get_sections(pe, image_base)     # Create dictionary of sections in the format 'key:[rva, va, physical]'
+    target_section, target_section_addr = get_target_section(sections, addr_of_entry_point, image_base)     # Get target section and address
+    offset_target_section = get_offset_target_section(sections, target_section, target_section_addr)    # Get offset into the target section
+    rva_physical = get_physical_start(sections, offset_target_section, target_section)      # Add offset to the start of the section on disk
+    print("Physical Location: {}".format(rva_physical))
 else:
     print("Whoops")
     exit(1)
