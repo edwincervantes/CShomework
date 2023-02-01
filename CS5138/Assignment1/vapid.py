@@ -54,18 +54,17 @@ def get_entry_point(pe):
 def get_image_base(pe):
     return hex(pe.OPTIONAL_HEADER.ImageBase)
 
-#base_addr = "0x400000"
-#va_addr = "0x1000"
 
-#print(hex(int(va_addr,16) + int(base_addr, 16)))
+#hex(int(va_addr, 16) + int(base_addr, 16))
 def get_sections(pe, base_addr):
     section_dir = {}
     for section in pe.sections:
-        print(hex(section.VirtualAddress), int(base_addr, 16))
+        va_addr = hex(section.VirtualAddress)
+        start_va = hex(int(va_addr, 16) + int(base_addr, 16)))
         val = []
         val.append(hex(section.VirtualAddress))
-        val.append(int(hex(section.VirtualAddress), 16) + int(base_addr, 16))
-        val.append(section.SizeOfRawData)
+        val.append(start_va))
+        val.append(pe.get_physical_by_rva(hex(section.VirtualAddress)))
         section_dir[section.Name.decode("utf-8").replace("\x00", "")] = val
     return section_dir
 
