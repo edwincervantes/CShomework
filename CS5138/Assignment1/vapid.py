@@ -54,7 +54,10 @@ def get_entry_point(pe):
 def get_image_base(pe):
     return hex(pe.OPTIONAL_HEADER.ImageBase)
 
+#base_addr = "0x400000"
+#va_addr = "0x1000"
 
+#print(hex(int(va_addr,16) + int(base_addr, 16)))
 def get_sections(pe, base_addr):
     section_dir = {}
     for section in pe.sections:
