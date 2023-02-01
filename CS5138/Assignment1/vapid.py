@@ -59,11 +59,12 @@ def get_image_base(pe):
 def get_sections(pe, base_addr):
     section_dir = {}
     for section in pe.sections:
+        print(section)
         va_addr = hex(section.VirtualAddress)
-        start_va = hex(int(va_addr, 16) + int(base_addr, 16)))
+        start_va = hex(int(va_addr, 16) + int(base_addr, 16))
         val = []
         val.append(hex(section.VirtualAddress))
-        val.append(start_va))
+        val.append(start_va)
         val.append(pe.get_physical_by_rva(hex(section.VirtualAddress)))
         section_dir[section.Name.decode("utf-8").replace("\x00", "")] = val
     return section_dir
