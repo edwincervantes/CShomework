@@ -27,9 +27,10 @@ def valid_args(vap_args):
         flag = False
     # Check if hex then check if decimal
     if not is_hex(vap_args[2][2:]):
+        print("Not a valid hexidecimal, checking for decimal...")
         if not int(vap_args[2]):
             print("The Target Virtual Address must be in hexadecimal form (0x1234) or decimal")
-            flag = False
+            flag = False    
     return flag
 
 
@@ -67,20 +68,23 @@ def get_sections(pe, image_base):
     return section_dir
 
 
-def get_target_section(sections, addr_of_entry_point, image_base):
-    target_section_addr = hex(int(addr_of_entry_point, 16) + int(image_base, 16))
+def get_target_section(sections, target_virtual_addr):
     target_section = ''
+    pos = 0
     for key in sections:
+        pos = pos + 1
         curr = sections[key][1]
-        if int(target_section_addr, 16) > int(curr, 16):
+        if int(target_virtual_addr, 16) > int(curr, 16):
             target_section = key
-
-    return (target_section, target_section_addr)
+    if target_section == '':
+        print('{} --> ???'.format(target_virtual_addr))
+        exit(1)
+    else:
+        return target_section
 
 
 def get_offset_target_section(sections, target_section, target_virtual_addr):
     start_va = sections[target_section][1]
-    print("offset: {}".format(hex(int(target_virtual_addr, 16) - int(start_va, 16))))
     return hex(int(target_virtual_addr, 16) - int(start_va, 16))
     
 
@@ -102,17 +106,14 @@ if __name__ == "__main__":
     target_virtual_addr = vapid_args[2]
     pe = pefile.PE(exe_path)
 
-    if not check_tva(target_virtual_addr):
-        print("{} -> ???".format(target_virtual_addr))
-
     if not check_32bit(pe):
         print("{} must be a 32-bit .exe")
 
     addr_of_entry_point = get_entry_point(pe)   # Get entry point
     image_base = get_image_base(pe)     # Get image base
     sections = get_sections(pe, image_base)     # Create dictionary of sections in the format 'key:[rva, va, physical]'
-    target_section, target_section_addr = get_target_section(sections, addr_of_entry_point, image_base)     # Get target section and address
-    offset_target_section = get_offset_target_section(sections, target_section, target_section_addr)    # Get offset into the target section
+    target_section = get_target_section(sections, target_virtual_addr)     # Get target section and address
+    offset_target_section = get_offset_target_section(sections, target_section, target_virtual_addr)    # Get offset into the target section
     rva_physical = get_physical_start(sections, offset_target_section, target_section)      # Add offset to the start of the section on disk
     print("Physical Location: {}".format(rva_physical))
 else:
