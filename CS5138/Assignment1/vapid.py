@@ -71,7 +71,7 @@ def get_target_section(sections, target_virtual_addr):
         if int(target_virtual_addr, 16) > int(curr, 16):
             target_section = key
     if target_section == '':
-        print('{} -> ???'.format(target_virtual_addr))
+        print('{} -> ??'.format(target_virtual_addr))
         exit(1)
     else:
         return target_section
